@@ -1,0 +1,10 @@
+twine
+boto3
+pandas
+numpy
+psycopg2
+pymongo
+pytest
+pytest-cov
+codecov
+git+git://github.com/mitchelllisle/martha.git#egg=martha
