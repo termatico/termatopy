@@ -3,7 +3,7 @@ import io
 import pandas as pd
 from zipfile import ZipFile
 
-def create_instance_ftp(host, user, password):
+def ftpCreateInstance(host, user, password):
     '''
 
     Create an FTP object to interact with FTP transfer protocol
@@ -25,7 +25,7 @@ def create_instance_ftp(host, user, password):
     return ftp_object
 
 
-def list_files_ftp(ftp_object, directory):
+def ftpListFiles(ftp_object, directory):
     '''
     List files within an FTP directory
     -----------
@@ -45,7 +45,7 @@ def list_files_ftp(ftp_object, directory):
     return ftp_directory_list
 
 
-def get_binary_object_ftp(ftp_object, file):
+def ftpGetBinaryObject(ftp_object, file):
     '''
     Get an object from an ftp directory.
 
@@ -66,7 +66,7 @@ def get_binary_object_ftp(ftp_object, file):
     return binary_object
 
 
-def read_file_from_zip(binary_object, zipped_file):
+def zipReadFile(binary_object, zipped_file):
     '''
     Extract a file from a zip archive
     -----------
@@ -84,7 +84,7 @@ def read_file_from_zip(binary_object, zipped_file):
     return zip_object.read(zipped_file)
 
 
-def read_delimited_txt_ftp(bytesObject, delimiter):
+def ftpReadDelimitedText(bytesObject, delimiter):
     '''
     Take a bytes object that you've retrieved from the FTP and convert it into a delimiter text file
     ---------
