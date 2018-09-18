@@ -3,7 +3,7 @@ import io
 import pandas as pd
 from zipfile import ZipFile
 
-def create_ftp_object(host, user, password):
+def create_instance_ftp(host, user, password):
     '''
 
     Create an FTP object to interact with FTP transfer protocol
@@ -45,7 +45,7 @@ def list_files_ftp(ftp_object, directory):
     return ftp_directory_list
 
 
-def get_binary_ftp_object(ftp_object, file):
+def get_binary_object_ftp(ftp_object, file):
     '''
     Get an object from an ftp directory.
 
