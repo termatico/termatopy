@@ -1,4 +1,5 @@
 import pandas as pd
+import botocore.config
 import boto3
 import io
 from io import StringIO
@@ -162,9 +163,10 @@ def extractBucketName(location):
     path = params.split("/", maxsplit = 1)[1:]
     return bucket, path
 
-def invokeLambda(accessKey, secret, arn, payload, region = 'ap-southeast-2'):
+def invokeLambda(accessKey, secret, arn, payload, region = 'ap-southeast-2', maxRetries = 0):
     try:
-        client = boto3.client('lambda', aws_access_key_id = accessKey, aws_secret_access_key = secret, region_name = region)
+        cfg = botocore.config.Config(retries={'max_attempts': maxRetries})
+        client = boto3.client('lambda', aws_access_key_id = accessKey, aws_secret_access_key = secret, region_name = region, config=cfg)
         res = client.invoke(FunctionName = arn, Payload = json.dumps(payload), InvocationType = 'Event')
         return res
     except Exception as e:
