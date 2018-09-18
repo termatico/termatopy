@@ -15,7 +15,7 @@ def create_ftp_object(host, user, password):
     PARAMS
     -----------
     :param host: FTP Host to connect to. EG 'smi.sharefileftp.com'
-    :param user: FTP User associated with the FTP host. EG 'smi/michael.lim@blueflag.com.au'
+    :param user: FTP User associated with the FTP host. EG 'smi/name@blueflag.com.au'
     :param password: Password of the FTP user
     :return: We return an FTP object upon which we can use a variety of methods
     '''
