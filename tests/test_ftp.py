@@ -9,6 +9,3 @@ def test_ftpCreateInstance():
     ftplib.FTP = MagicMock(return_value=mock_ftp_instance)
     actual = ftpCreateInstance('host', 'user', 'passwd')
     assert mock_ftp_instance == actual
-
-
-
