@@ -8,5 +8,5 @@ from termatopy.ftp import ftpCreateInstance
 def test_ftpCreateInstance():
     mock_ftp_instance = Mock()
     ftplib.FTP = MagicMock(return_value=mock_ftp_instance)
-    actual = tpy.ftpCreateInstance('host', 'user', 'passwd')
+    actual = ftpCreateInstance('host', 'user', 'passwd')
     assert mock_ftp_instance == actual
