@@ -20,6 +20,12 @@ from .outputs import Logger
 from .inputs import profile
 from .inputs import source
 from .termatico import runTemplate
+from .ftp import ftpCreateInstance
+from .ftp import ftpListFiles
+from .ftp import ftpGetBinaryObject
+from .ftp import zipReadFile
+from .ftp import ftpReadDelimitedText
+
 
 import numpy
 from psycopg2.extensions import register_adapter, AsIs
