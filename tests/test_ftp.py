@@ -3,9 +3,12 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 import ftplib
 import io
+from zipfile import ZipFile
+import pandas as pd
 from termatopy.ftp import ftpCreateInstance
 from termatopy.ftp import ftpListFiles
 from termatopy.ftp import ftpGetBinaryObject
+from termatopy.ftp import zipReadFile
 
 
 def test_ftpCreateInstance():
@@ -33,5 +36,16 @@ def test_ftpGetBinaryObject():
     actual = ftpGetBinaryObject(mock_ftp_object, 'file')
 
     assert expected.read() == actual.read()
+
+def test_zipReadFile():
+    mock_object = Mock()
+    expected = Mock()
+    ZipFile = MagicMock(return_value=mock_object)
+    mock_object.read = MagicMock(return_value=expected)
+
+    actual_zip_object = ZipFile('binary_object')
+    actual_file = actual_zip_object.read('zipped_file')
+    assert expected == actual_file
+
 
 
