@@ -8,7 +8,7 @@ import pandas as pd
 from termatopy.ftp import ftpCreateInstance
 from termatopy.ftp import ftpListFiles
 from termatopy.ftp import ftpGetBinaryObject
-from termatopy.ftp import zipReadFile
+from termatopy.ftp import ftpReadDelimitedText
 
 
 def test_ftpCreateInstance():
@@ -37,15 +37,19 @@ def test_ftpGetBinaryObject():
 
     assert expected.read() == actual.read()
 
-def test_zipReadFile():
-    mock_object = Mock()
+
+def test_ftpReadDelimitedText():
+    mock_bytes = io.BytesIO().read()
+    mock_string = Mock()
+    mock_data = Mock()
     expected = Mock()
-    ZipFile = MagicMock(return_value=mock_object)
-    mock_object.read = MagicMock(return_value=expected)
 
-    actual_zip_object = ZipFile('binary_object')
-    actual_file = actual_zip_object.read('zipped_file')
-    assert expected == actual_file
+    str = MagicMock(return_value=mock_string)
+    io.StringIO = MagicMock(return_value=mock_data)
+    pd.read_table = MagicMock(return_value=expected)
 
+    actual = ftpReadDelimitedText(mock_bytes,'delimiter')
+
+    assert expected == actual
 
 
