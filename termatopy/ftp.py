@@ -61,7 +61,7 @@ def ftpGetBinaryObject(ftp_object, file):
     :param file: A file within a directory that you would like to read into memory. You must specify the full path.
     :return: binary object of the file that you want read (will require other functions to make useful)
     '''
-    binary_object = io.Bytes()
+    binary_object = io.BytesIO()
     ftp_object.retrbinary("RETR " + file, binary_object.write)
     return binary_object
 
