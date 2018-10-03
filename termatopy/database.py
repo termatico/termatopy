@@ -39,11 +39,12 @@ def queryPostgres(host, port, user, password, database, query):
             pass
 
         rows = cur.fetchall()
-        data = pd.DataFrame(rows, columns = [columns])
-        conn.close
+        data = pd.DataFrame(rows)
+        data.columns = columns
+        conn.close()
         return data
-    except Exception as e:
-         raise Exception(str(e))
+    except ValueError as e:
+         raise Exception("ValueError: Most likely no rows were returned from database.")
 
 def runQueryPostgres(host, port, user, password, database, query):
     try:
