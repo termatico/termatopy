@@ -4,7 +4,6 @@ import psycopg2 as ps
 import pymongo as pm
 import pandas as pd
 import numpy
-import martha as mh
 import boto3
 from bson.json_util import loads as bson_loads
 from .aws import extractBucketName
@@ -40,12 +39,11 @@ def queryPostgres(host, port, user, password, database, query):
             pass
 
         rows = cur.fetchall()
-        data = pd.DataFrame(rows)
-        data.columns = columns
-        conn.close()
+        data = pd.DataFrame(rows, columns = [columns])
+        conn.close
         return data
-    except ValueError as e:
-         raise Exception("ValueError: Most likely no rows were returned from database.")
+    except Exception as e:
+         raise Exception(str(e))
 
 def runQueryPostgres(host, port, user, password, database, query):
     try:
@@ -90,6 +88,30 @@ def createFieldReplacement(repeats):
         fieldReplacement = "(" + fieldReplacement + ")"
         return fieldReplacement
 
+
+def cleanUpString(text, strip_chars=[], replace_extras={}):
+    # Credit for this code goes to: https://codereview.stackexchange.com/users/114734/double-j
+    # Taken from this URL: https://codereview.stackexchange.com/questions/139549/python-string-clean-up-function-with-optional-args
+    clean_up_items = {'\n': ' ', '\r': ' ', '\t': ' ', '  ': ' '}
+    clean_up_items.update(replace_extras)
+
+    text = text.strip()
+
+    change_made = True
+    while change_made:
+        text_old = text
+        for x in strip_chars:
+            while text.startswith(x) or text.endswith(x):
+                text = text.strip(x).strip()
+
+        for key, val in clean_up_items.items():
+            while key in text:
+                text = text.replace(key, val)
+
+        change_made = False if text_old == text else True
+
+    return text.strip()
+
 def insertToPostgres(host, port, username, password, database, table, data, columns, upsertPrimaryKey = None):
     try:
         data = data.where((pd.notnull(data)), None)
@@ -97,7 +119,7 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
         fieldReplacement = createFieldReplacement(len(data.columns))
         conn = ps.connect("dbname='" + database + "' user='" + username + "' host='" + host + "' port='" + port + "' password='" + password + "'")
         cur = conn.cursor()
-        allRowSql = bytes(b"INSERT INTO " + table.encode() + b" (" + mh.cleanUpString(str(data.columns.values.tolist()), ["[", "]", "'"], {"'" : ""}).encode() + b") VALUES ")
+        allRowSql = bytes(b"INSERT INTO " + table.encode() + b" (" + cleanUpString(str(data.columns.values.tolist()), ["[", "]", "'"], {"'" : ""}).encode() + b") VALUES ")
 
         for i in range(rowsToInsert):
             row = data.iloc[i].values.tolist()
@@ -131,7 +153,6 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
     except Exception as e:
         conn.close()
         raise Exception(str(e))
-
 
 def getExecutionStatus(executionId, client):
     execution = client.get_query_execution(QueryExecutionId = executionId)
