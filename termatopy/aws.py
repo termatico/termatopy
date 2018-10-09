@@ -72,6 +72,28 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
             data = pd.read_json(bytesObject).to_json()
             return data
 
+def deleteS3(access_key, secret, bucket, file):
+    '''
+    Delete a file from an S3 Bucket
+    -----------
+    DETAILS
+    -----------
+    This function is used to remove files from s3. Note: Once this has been done, there is no way to retrive this file
+    -----------
+    PARAMS
+    -----------
+    access_key : Amazon Access Key used to access the specified file
+    secret : Amazon Access Secret used to access the specified file
+    bucket : The bucket to connect to. This bucket should be specified without the 's3://' prefix e.g. 'my_bucket'
+    file : The file within the specified bucket to delete. This should also include the
+    relative path. Preceeding forward slash can be ommitted. E.g. 'myfolder/myfile.csv'
+    '''
+    s3 = boto3.client('s3', aws_access_key_id = access_key, aws_secret_access_key = secret)
+    response = s3.delete_object(
+        Bucket=bucket,
+        Key=file)
+    return response
+
 def putS3(access_key, secret, bucket, file, data, includeIndex = True, includePreview = False):
     '''
     Put a file on to an AWS S3 Bucket
