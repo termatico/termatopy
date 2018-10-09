@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 from .aws import fetchS3
+from .aws import deleteS3
 from .aws import invokeLambda
 from .aws import putS3
 from .aws import listFiles
