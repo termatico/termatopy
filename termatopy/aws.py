@@ -115,7 +115,7 @@ def putS3(access_key, secret, bucket, file, data, includeIndex = True, includePr
     try:
         s3 = boto3.client('s3', aws_access_key_id = access_key, aws_secret_access_key = secret)
         fileType = checkFileType(file)
-        if fileType == 'csv':
+        if fileType in ['csv', 'txt', 'text']:
             csv_buffer = StringIO()
 
             data.to_csv(csv_buffer, index = includeIndex)
