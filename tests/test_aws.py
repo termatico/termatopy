@@ -1,3 +1,5 @@
+import boto3
+
 from termatopy import checkFileType
 import termatopy as tpy
 from unittest.mock import MagicMock
