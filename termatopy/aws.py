@@ -61,15 +61,15 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
     if returnObj is True:
         return obj
     elif returnObj is False:
-        bytesObject = io.BytesIO(obj['Body'].read())
+        body = obj['Body'].read()
         if fileType == 'txt':
-            data = pd.read_table(bytesObject, na_filter = naFilter, delimiter = delimiter)
+            data = pd.read_table(io.BytesIO(body), na_filter=naFilter, delimiter=delimiter)
             return data
         elif fileType == 'csv':
-            data = pd.read_csv(bytesObject, na_filter = naFilter)
+            data = pd.read_csv(io.BytesIO(body), na_filter=naFilter)
             return data
         elif fileType == 'json':
-            data = pd.read_json(bytesObject).to_json()
+            data = json.loads(body)
             return data
 
 def deleteS3(access_key, secret, bucket, file):
