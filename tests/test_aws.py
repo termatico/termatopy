@@ -1,5 +1,7 @@
 from termatopy import checkFileType
 import termatopy as tpy
+from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 
 # Test Definitions
