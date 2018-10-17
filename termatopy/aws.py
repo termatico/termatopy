@@ -76,7 +76,7 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
             elif fileType == 'json':
                 bytesObject = io.BytesIO(obj['Body'].read())
                 data = pd.read_json(bytesObject).to_json()
-                return data
+                return json.loads(data)
             elif fileType == 'pickle':
                 body = obj['Body'].read()
                 data = pickle.loads(body)
