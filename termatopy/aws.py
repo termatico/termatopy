@@ -1,6 +1,7 @@
 import pandas as pd
 import botocore.config
 import boto3
+import pickle
 import io
 from io import StringIO
 import json
@@ -30,6 +31,8 @@ def checkFileType(file_path):
         fileType = 'txt'
     elif re.search('.json$', file_path):
         fileType = 'json'
+    elif re.search('.pkl$', file_path):
+        fileType = 'pickle'
     return fileType
 
 def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True, delimiter = ","):
@@ -54,23 +57,31 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
     naFilter: Boolean input. Choose how to treat nas. If false your dataframe will return all blank values as NA or NaN. If True, the null values will be returned as blank
     delimiter: Choose the row delimiter to pass. Useful for files like pipe delimited files. Default argument is comm.
     '''
-    s3 = boto3.client('s3', aws_access_key_id = access_key, aws_secret_access_key = secret)
-    obj = s3.get_object(Bucket = bucket, Key = file)
-    fileType = checkFileType(file_path = file)
+    try:
+        s3 = boto3.client('s3', aws_access_key_id = access_key, aws_secret_access_key = secret)
+        obj = s3.get_object(Bucket = bucket, Key = file)
+        fileType = checkFileType(file_path = file)
 
-    if returnObj is True:
-        return obj
-    elif returnObj is False:
-        body = obj['Body'].read()
-        if fileType == 'txt':
-            data = pd.read_table(io.BytesIO(body), na_filter=naFilter, delimiter=delimiter)
-            return data
-        elif fileType == 'csv':
-            data = pd.read_csv(io.BytesIO(body), na_filter=naFilter)
-            return data
-        elif fileType == 'json':
-            data = json.loads(body)
-            return data
+        if returnObj is True:
+            return obj
+        elif returnObj is False:
+            if fileType == 'txt':
+                bytesObject = io.BytesIO(obj['Body'].read())
+                data = pd.read_table(bytesObject, na_filter = naFilter, delimiter = delimiter)
+                return data
+            elif fileType == 'csv':
+                bytesObject = io.BytesIO(obj['Body'].read())
+                data = pd.read_csv(bytesObject, na_filter = naFilter)
+                return data
+            elif fileType == 'json':
+                bytesObject = io.BytesIO(obj['Body'].read())
+                data = pd.read_json(bytesObject).to_json()
+            elif fileType == 'pickle':
+                body = obj['Body'].read()
+                model = pickle.loads(body)
+                return model
+    except Exception as e:
+        raise Exception(str(e))
 
 def deleteS3(access_key, secret, bucket, file):
     '''
