@@ -76,10 +76,11 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
             elif fileType == 'json':
                 bytesObject = io.BytesIO(obj['Body'].read())
                 data = pd.read_json(bytesObject).to_json()
+                return data
             elif fileType == 'pickle':
                 body = obj['Body'].read()
-                model = pickle.loads(body)
-                return model
+                data = pickle.loads(body)
+                return data
     except Exception as e:
         raise Exception(str(e))
 
