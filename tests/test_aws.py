@@ -23,6 +23,10 @@ def test_check_file_type_json():
     assert json_test == 'json'
 
 
+def test_check_file_type_pickle():
+    json_test = checkFileType("test.pkl")
+    assert json_test == 'pickle'
+
 def test_fetch_s3_txt():
     mock_s3_client = Mock()
     mock_body = Mock()
