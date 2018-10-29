@@ -179,14 +179,20 @@ def listFiles(access_key, secret, bucket, folder = '', startAfter = '', endswith
         response = s3.list_objects_v2(Bucket = bucket, Prefix = folder, StartAfter = startAfter)
         allKeys = []
         for i in range(0, len(response['Contents'])):
-            allKeys.append(response['Contents'][i]['Key'])
+            file = response['Contents'][i]
+            record = {
+                "file" : file.get('Key'),
+                "lastModified" : file.get('LastModified', None),
+                "size" : file.get('Size', None)
+            }
+            allKeys.append(record)
+        fileData = pd.DataFrame(allKeys)
 
         if endswith != None:
-            allKeys = list(filter(lambda x: str(x).endswith(endswith), allKeys))
-        return allKeys
+            fileData = fileData[fileData['file'].map(lambda x: str(x).endswith(endswith))]
+        return fileData
     except Exception as e:
         raise Exception(str(e))
-
 
 def extractBucketName(location):
     '''
