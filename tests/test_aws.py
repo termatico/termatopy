@@ -1,6 +1,7 @@
 import boto3
 import json
 
+import pandas as pd
 from termatopy import checkFileType
 import termatopy as tpy
 from unittest.mock import MagicMock
@@ -64,7 +65,7 @@ def test_fetch_s3_csv():
 def test_fetch_s3_json():
     mock_s3_client = Mock()
     mock_body = Mock()
-    expected = bytearray("{}", "utf-8")
+    expected = bytearray("{0 :{\"rows\" : null}}", "utf-8")
 
     boto3.client = MagicMock(return_value=mock_s3_client)
     mock_s3_client.get_object = MagicMock(return_value={"Body": mock_body})
@@ -74,3 +75,19 @@ def test_fetch_s3_json():
 
     assert isinstance(actual, dict)
     assert expected == bytearray(json.dumps(actual), "utf-8")
+
+def test_dynamoDescribeTable():
+    mock_dynamo_client = Mock()
+    mock_body = Mock()
+    expected = bytearray("{\"0\":{\"rows\":null,\"readCapacityUnits\":null,\"writeCapacityUnits\":null,\"status\":null,\"sizeBytes\":null}}", "utf-8")
+
+    boto3.client = MagicMock(return_value=mock_dynamo_client)
+    mock_dynamo_client.get_object = MagicMock(return_value={"Body": mock_body})
+    mock_body.read = MagicMock(return_value=expected)
+
+    actual = describeDynamoTable("access_key", "secret_key", "table")
+
+    from pandas import DataFrame
+
+    assert isinstance(actual, DataFrame)
+    assert expected == bytearray(actual.to_json(orient="index"), "utf-8")
