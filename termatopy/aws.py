@@ -211,3 +211,17 @@ def invokeLambda(accessKey, secret, arn, payload, region = 'ap-southeast-2', max
         return res
     except Exception as e:
         return str(e)
+
+def describeDynamoTable(accessKey, secret, table, region = 'ap-southeast-2'):
+    client = boto3.client('dynamodb', aws_access_key_id = accessKey, aws_secret_access_key = secret, region_name = region)
+
+    response = client.describe_table(TableName = table)
+    tableData = response.get("Table")
+    tableMeta = {
+        "rows" : tableData.get("ItemCount"),
+        "readCapacityUnits" : tableData.get("ReadCapacityUnits"),
+        "writeCapacityUnits" : tableData.get("WriteCapacityUnits"),
+        "status" : tableData.get("TableStatus"),
+        "sizeBytes" : tableData.get("TableSizeBytes")
+    }
+    return pd.DataFrame(tableMeta, index = [0])
