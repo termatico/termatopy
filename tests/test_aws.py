@@ -85,7 +85,7 @@ def test_dynamoDescribeTable():
     mock_dynamo_client.get_object = MagicMock(return_value={"Body": mock_body})
     mock_body.read = MagicMock(return_value=expected)
 
-    actual = describeDynamoTable("access_key", "secret_key", "table")
+    actual = tpy.describeDynamoTable("access_key", "secret_key", "table")
 
     from pandas import DataFrame
 
