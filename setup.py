@@ -11,7 +11,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 setup(name='termatopy',
-      version='NumbCaterpillar',
+      version='FatPolarBear',
       description='A python Termatico Package',
       url='http://github.com/termatico/termatopy',
       author='Mitchell Lisle',
