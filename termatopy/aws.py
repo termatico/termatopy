@@ -225,3 +225,9 @@ def describeDynamoTable(accessKey, secret, table, region = 'ap-southeast-2'):
         "sizeBytes" : tableData.get("TableSizeBytes")
     }
     return pd.DataFrame(tableMeta, index = [0])
+
+def scanDynamoTable(accessKey, secret, table, attributes, region = 'ap-southeast-2'):
+    client = boto3.client('dynamodb', aws_access_key_id = accessKey, aws_secret_access_key = secret, region_name = region)
+
+    response = client.scan(TableName = table, AttributesToGet = attributes, Select = "SPECIFIC_ATTRIBUTES")
+    return response
