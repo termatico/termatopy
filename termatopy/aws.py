@@ -158,6 +158,17 @@ def putS3(access_key, secret, bucket, file, data, includeIndex = True, includePr
     except Exception as e:
         raise Exception(str(e))
 
+def appendFileList(allKeys, newResposne):
+    for i in range(0, len(newResposne['Contents'])):
+        file = newResposne['Contents'][i]
+        record = {
+            "file" : file.get('Key'),
+            "lastModified" : file.get('LastModified', None),
+            "size" : file.get('Size', None)
+        }
+        allKeys.append(record)
+    return allKeys        
+
 def listFiles(access_key, secret, bucket, folder = '', startAfter = '', endswith = None):
     '''
     List all files in a bucker or folder on S3
@@ -178,19 +189,17 @@ def listFiles(access_key, secret, bucket, folder = '', startAfter = '', endswith
         s3 = boto3.client('s3', aws_access_key_id = access_key, aws_secret_access_key = secret)
         response = s3.list_objects_v2(Bucket = bucket, Prefix = folder, StartAfter = startAfter)
         allKeys = []
-        for i in range(0, len(response['Contents'])):
-            file = response['Contents'][i]
-            record = {
-                "file" : file.get('Key'),
-                "lastModified" : file.get('LastModified', None),
-                "size" : file.get('Size', None)
-            }
-            allKeys.append(record)
+        allKeys = appendFileList(allKeys, response)
+
+        while response['IsTruncated'] == True:
+            response = s3.list_objects_v2(Bucket = bucket, Prefix = folder, StartAfter = startAfter, ContinuationToken = response['NextContinuationToken'])
+            allKeys = appendFileList(allKeys, response)
+
         fileData = pd.DataFrame(allKeys)
 
         if endswith != None:
             fileData = fileData[fileData['file'].map(lambda x: str(x).endswith(endswith))]
-        return fileData
+        return fileData.reset_index(drop = True)
     except Exception as e:
         raise Exception(str(e))
 
