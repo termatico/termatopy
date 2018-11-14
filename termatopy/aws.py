@@ -33,6 +33,8 @@ def checkFileType(file_path):
         fileType = 'json'
     elif re.search('.pkl$', file_path):
         fileType = 'pickle'
+    elif re.search('.html$', file_path):
+        fileType = 'html'
     return fileType
 
 def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True, delimiter = ","):
@@ -80,6 +82,10 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
             elif fileType == 'pickle':
                 body = obj['Body'].read()
                 data = pickle.loads(body)
+                return data
+            elif fileType == 'html':
+                data = obj['Body'].read()
+                # data = pickle.loads(body)
                 return data
     except Exception as e:
         raise Exception(str(e))
@@ -167,7 +173,7 @@ def appendFileList(allKeys, newResposne):
             "size" : file.get('Size', None)
         }
         allKeys.append(record)
-    return allKeys        
+    return allKeys
 
 def listFiles(access_key, secret, bucket, folder = '', startAfter = '', endswith = None):
     '''
