@@ -159,10 +159,11 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
         raise Exception(str(e))
 
 
-def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public"):
+def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public", page_size=100):
     conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
     cur = conn.cursor()
 
+    progress = 0
     col_names = list(data)
 
     for index, value in data.iterrows():
@@ -180,8 +181,12 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
             sql.SQL(', ').join([sql.Placeholder()] * len(value_list)))
 
         cur.execute(insert_query, value_list)
-        conn.commit()
+        progress += 1
 
+        if progress % page_size == 0:
+            conn.commit()
+
+    conn.commit()
     conn.close()
 
     pass
