@@ -171,7 +171,7 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
 
         for col_name in col_names:
             column_list.append(sql.Identifier(col_name.lower()))
-            value_list.append(convert_column_type(col_name, value, column_types))
+            value_list.append(convertColumnType(col_name, value, column_types))
 
         insert_query = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
             sql.Identifier(schema),
