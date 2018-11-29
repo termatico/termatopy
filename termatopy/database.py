@@ -1,6 +1,9 @@
 import warnings
 warnings.filterwarnings("ignore")
+import ast
 import psycopg2 as ps
+from psycopg2 import sql
+from psycopg2.extras import Json
 import pymongo as pm
 import pandas as pd
 import numpy
@@ -154,6 +157,53 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
     except Exception as e:
         conn.close()
         raise Exception(str(e))
+
+
+def insertToPostgres2(host, port, username, password, database, table, data, column_types, schema="public", page_size=100):
+    conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
+    cur = conn.cursor()
+
+    progress = 0
+    col_names = list(data)
+
+    for index, value in data.iterrows():
+        value_list = list()
+        column_list = list()
+
+        for col_name in col_names:
+            column_list.append(sql.Identifier(col_name.lower()))
+            value_list.append(convertColumnType(col_name, value, column_types))
+
+        insert_query = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
+            sql.Identifier(schema),
+            sql.Identifier(table),
+            sql.SQL(', ').join(column_list),
+            sql.SQL(', ').join([sql.Placeholder()] * len(value_list)))
+
+        cur.execute(insert_query, value_list)
+        progress += 1
+
+        if progress % page_size == 0:
+            conn.commit()
+
+    conn.commit()
+    conn.close()
+    output = {"columns" : len(data.columns), "rows" : len(data)}
+    return pd.DataFrame(output, index = [0])
+
+
+def convertColumnType(column, values, column_types):
+    column_type = column_types[column]
+
+    if column_type == "json":
+        return Json(ast.literal_eval(values.get(column)))
+    elif column_type == "text":
+        return str(values.get(column))
+    elif column_type == "int":
+        return int(values.get(column))
+    else:
+        raise Exception("Unknown column [%s] of type [%s]" % (column, column_type))
+
 
 def getExecutionStatus(executionId, client):
     execution = client.get_query_execution(QueryExecutionId = executionId)
