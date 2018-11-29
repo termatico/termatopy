@@ -159,7 +159,7 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
         raise Exception(str(e))
 
 
-def insert_to_postgres(host, username, password, database, table, data, column_types, port=5432, schema="public"):
+def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public"):
     conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
     cur = conn.cursor()
 
@@ -168,7 +168,7 @@ def insert_to_postgres(host, username, password, database, table, data, column_t
         column_list = list()
 
         column_list.append(sql.Identifier(column))
-        value_list.append(convert_column_type(column, value, column_types))
+        value_list.append(convertColumnType(column, value, column_types))
 
         insert_query = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
             sql.Identifier(schema),
@@ -184,7 +184,7 @@ def insert_to_postgres(host, username, password, database, table, data, column_t
     pass
 
 
-def convert_column_type(column, values, column_types):
+def convertColumnType(column, values, column_types):
     column_type = column_types[column]
 
     if column_type == "json":
