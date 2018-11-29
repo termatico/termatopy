@@ -163,12 +163,15 @@ def insert_to_postgres(host, username, password, database, table, data, column_t
     conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
     cur = conn.cursor()
 
-    for column, value in data.items():
+    col_names = list(data)
+
+    for index, value in data.iterrows():
         value_list = list()
         column_list = list()
 
-        column_list.append(sql.Identifier(column))
-        value_list.append(convert_column_type(column, value, column_types))
+        for col_name in col_names:
+            column_list.append(sql.Identifier(col_name.lower()))
+            value_list.append(convert_column_type(col_name, value, column_types))
 
         insert_query = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
             sql.Identifier(schema),
@@ -177,8 +180,8 @@ def insert_to_postgres(host, username, password, database, table, data, column_t
             sql.SQL(', ').join([sql.Placeholder()] * len(value_list)))
 
         cur.execute(insert_query, value_list)
+        conn.commit()
 
-    conn.commit()
     conn.close()
 
     pass
@@ -188,11 +191,11 @@ def convert_column_type(column, values, column_types):
     column_type = column_types[column]
 
     if column_type == "json":
-        return Json(ast.literal_eval(values.get(0)))
+        return Json(ast.literal_eval(values.get(column)))
     elif column_type == "text":
-        return str(values.get(0))
+        return str(values.get(column))
     elif column_type == "int":
-        return int(values.get(0))
+        return int(values.get(column))
     else:
         raise Exception("Unknown column [%s] of type [%s]" % (column, column_type))
 
