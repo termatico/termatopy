@@ -1,6 +1,9 @@
 import warnings
 warnings.filterwarnings("ignore")
+import ast
 import psycopg2 as ps
+from psycopg2 import sql
+from psycopg2.extras import Json
 import pymongo as pm
 import pandas as pd
 import numpy
@@ -154,6 +157,45 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
     except Exception as e:
         conn.close()
         raise Exception(str(e))
+
+
+def insert_to_postgres(host, username, password, database, table, data, column_types, port=5432, schema="public"):
+    conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
+    cur = conn.cursor()
+
+    for column, value in data.items():
+        value_list = list()
+        column_list = list()
+
+        column_list.append(sql.Identifier(column))
+        value_list.append(convert_column_type(column, value, column_types))
+
+        insert_query = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
+            sql.Identifier(schema),
+            sql.Identifier(table),
+            sql.SQL(', ').join(column_list),
+            sql.SQL(', ').join([sql.Placeholder()] * len(value_list)))
+
+        cur.execute(insert_query, value_list)
+
+    conn.commit()
+    conn.close()
+
+    pass
+
+
+def convert_column_type(column, values, column_types):
+    column_type = column_types[column]
+
+    if column_type == "json":
+        return Json(ast.literal_eval(values.get(0)))
+    elif column_type == "text":
+        return str(values.get(0))
+    elif column_type == "int":
+        return int(values.get(0))
+    else:
+        raise Exception("Unknown column [%s] of type [%s]" % (column, column_type))
+
 
 def getExecutionStatus(executionId, client):
     execution = client.get_query_execution(QueryExecutionId = executionId)
