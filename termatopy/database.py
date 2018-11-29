@@ -159,7 +159,7 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
         raise Exception(str(e))
 
 
-def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public", page_size=100):
+def insertToPostgres2(host, port, username, password, database, table, data, column_types, schema="public", page_size=100):
     conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
     cur = conn.cursor()
 
@@ -188,8 +188,8 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
 
     conn.commit()
     conn.close()
-
-    pass
+    output = {"columns" : len(data.columns), "rows" : len(data)}
+    return pd.DataFrame(output, index = [0])
 
 
 def convertColumnType(column, values, column_types):
