@@ -185,8 +185,8 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
 
     conn.commit()
     conn.close()
-
-    pass
+    output = {"columns" : len(data.columns), "rows" : len(data)}
+    return pd.DataFrame(output, index = [0])
 
 
 def insertToPostgresSqlPlain(relation, target, column_list, value_list, unique_key_list):
@@ -228,10 +228,11 @@ def insertToPostgresSql(relation, target, column_list, value_list, unique_key_li
         kwargs["pk"] = sql.SQL(', ').join(unique_key_list)
 
         kwargs["columns_update"] = sql.SQL(', ').join(
-            [column for column in column_list if column not in unique_key_list])
+            [column for column in column_list if column not in unique_key_list]
+        )
         kwargs["value_update"] = sql.SQL(', ').join(
-            [sql.Identifier("EXCLUDED." + column.string) for column in column_list if column not in unique_key_list])
-
+            [sql.Identifier("EXCLUDED." + column.string) for column in column_list if column not in unique_key_list]
+        )
     return insert_query.format(**kwargs)
 
 
