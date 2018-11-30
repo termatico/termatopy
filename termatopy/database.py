@@ -172,11 +172,10 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
         column_list = list()
 
         for col_name in col_names:
-            column_list.append(sql.Identifier(col_name.lower()))
+            column_list.append(col_name.lower())
             value_list.append(convertColumnType(col_name, value, column_types))
 
-        insert_query = insertToPostgresSql(schema, table, column_list, value_list,
-                                           [sql.Identifier(key) for key in unique_key_list])
+        insert_query = insertToPostgresSqlPlain(schema, table, column_list, value_list, unique_key_list)
 
         cur.execute(insert_query, value_list)
         progress += 1
@@ -188,6 +187,29 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
     conn.close()
 
     pass
+
+
+def insertToPostgresSqlPlain(relation, target, column_list, value_list, unique_key_list):
+    insert_query = "INSERT INTO {relation}.{target} ({columns_insert}) VALUES ({value_insert})" + (
+        " ON CONFLICT DO NOTHING" if (len(
+            unique_key_list) == 0) else " ON CONFLICT ({pk}) DO UPDATE SET ({columns_update}) = ({value_update})")
+    kwargs = dict()
+
+    kwargs["relation"] = relation
+    kwargs["target"] = target
+    kwargs["columns_insert"] = ", ".join(column_list)
+    kwargs["value_insert"] = ", ".join(["%s"] * len(value_list))
+
+    if len(unique_key_list) > 0:
+        kwargs["pk"] = ", ".join(unique_key_list)
+
+        kwargs["columns_update"] = ", ".join(
+            [column for column in column_list if column not in unique_key_list]
+        )
+        kwargs["value_update"] = ", ".join(
+            [("EXCLUDED." + column) for column in column_list if column not in unique_key_list]
+        )
+    return insert_query.format(**kwargs)
 
 
 def insertToPostgresSql(relation, target, column_list, value_list, unique_key_list):
