@@ -175,7 +175,8 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
             column_list.append(sql.Identifier(col_name.lower()))
             value_list.append(convertColumnType(col_name, value, column_types))
 
-        insert_query = insertToPostgresSql(schema, table, column_list, value_list)
+        insert_query = insertToPostgresSql(schema, table, column_list, value_list,
+                                           [sql.Identifier(key) for key in unique_key_list])
 
         cur.execute(insert_query, value_list)
         progress += 1
