@@ -159,7 +159,8 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
         raise Exception(str(e))
 
 
-def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public", page_size=100):
+def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public",
+                      page_size=100, unique_key_list=[]):
     conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
     cur = conn.cursor()
 
@@ -174,11 +175,7 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
             column_list.append(sql.Identifier(col_name.lower()))
             value_list.append(convertColumnType(col_name, value, column_types))
 
-        insert_query = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
-            sql.Identifier(schema),
-            sql.Identifier(table),
-            sql.SQL(', ').join(column_list),
-            sql.SQL(', ').join([sql.Placeholder()] * len(value_list)))
+        insert_query = insertToPostgresSql(schema, table, column_list, value_list)
 
         cur.execute(insert_query, value_list)
         progress += 1
@@ -190,6 +187,29 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
     conn.close()
 
     pass
+
+
+def insertToPostgresSql(relation, target, column_list, value_list, unique_key_list):
+    insert_query = sql.SQL(
+        "INSERT INTO {relation}.{target} ({columns_insert}) VALUES ({value_insert})" + (
+            " ON CONFLICT DO NOTHING" if (len(
+                unique_key_list) == 0) else " ON CONFLICT ({pk}) DO UPDATE SET ({columns_update}) = ({value_update})"))
+    kwargs = dict()
+
+    kwargs["relation"] = sql.Identifier(relation)
+    kwargs["target"] = sql.Identifier(target)
+    kwargs["columns_insert"] = sql.SQL(', ').join(column_list)
+    kwargs["value_insert"] = sql.SQL(', ').join([sql.Placeholder()] * len(value_list))
+
+    if len(unique_key_list) > 0:
+        kwargs["pk"] = sql.SQL(', ').join(unique_key_list)
+
+        kwargs["columns_update"] = sql.SQL(', ').join(
+            [column for column in column_list if column not in unique_key_list])
+        kwargs["value_update"] = sql.SQL(', ').join(
+            [sql.Identifier("EXCLUDED." + column.string) for column in column_list if column not in unique_key_list])
+
+    return insert_query.format(**kwargs)
 
 
 def convertColumnType(column, values, column_types):
