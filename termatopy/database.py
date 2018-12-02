@@ -212,39 +212,19 @@ def insertToPostgresSqlPlain(relation, target, column_list, value_list, unique_k
     return insert_query.format(**kwargs)
 
 
-def insertToPostgresSql(relation, target, column_list, value_list, unique_key_list):
-    insert_query = sql.SQL(
-        "INSERT INTO {relation}.{target} ({columns_insert}) VALUES ({value_insert})" + (
-            " ON CONFLICT DO NOTHING" if (len(
-                unique_key_list) == 0) else " ON CONFLICT ({pk}) DO UPDATE SET ({columns_update}) = ({value_update})"))
-    kwargs = dict()
-
-    kwargs["relation"] = sql.Identifier(relation)
-    kwargs["target"] = sql.Identifier(target)
-    kwargs["columns_insert"] = sql.SQL(', ').join(column_list)
-    kwargs["value_insert"] = sql.SQL(', ').join([sql.Placeholder()] * len(value_list))
-
-    if len(unique_key_list) > 0:
-        kwargs["pk"] = sql.SQL(', ').join(unique_key_list)
-
-        kwargs["columns_update"] = sql.SQL(', ').join(
-            [column for column in column_list if column not in unique_key_list]
-        )
-        kwargs["value_update"] = sql.SQL(', ').join(
-            [sql.Identifier("EXCLUDED." + column.string) for column in column_list if column not in unique_key_list]
-        )
-    return insert_query.format(**kwargs)
-
-
 def convertColumnType(column, values, column_types):
     column_type = column_types[column]
+    column_value = values.get(column)
 
     if column_type == "json":
-        return Json(ast.literal_eval(values.get(column)))
+        if isinstance(column_value, str):
+            return Json(ast.literal_eval(column_value))
+        else:
+            return Json(column_value)
     elif column_type == "text":
-        return str(values.get(column))
+        return str(column_value)
     elif column_type == "int":
-        return int(values.get(column))
+        return int(column_value)
     else:
         raise Exception("Unknown column [%s] of type [%s]" % (column, column_type))
 
