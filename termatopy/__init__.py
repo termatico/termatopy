@@ -30,7 +30,7 @@ from .ftp import zipReadFile
 from .ftp import ftpReadDelimitedText
 
 
-import numpy
+import numpy as np
 from psycopg2.extensions import register_adapter, AsIs
 
 
