@@ -35,3 +35,30 @@ def test_convert_column_type():
     expected4 = Json(column_values.get("col4")[0])
     actual4 = convertColumnType("col4", df.iloc[0], column_types)
     assert expected4.adapted == actual4.adapted
+
+
+def test_insert_to_postgres_sql_plain():
+    from termatopy.database import insertToPostgresSqlPlain
+
+    relation = "public"
+    table_name = "table_name"
+    column_list = ["col1", "col2", "col3", "col4"]
+    value_list = ["val1", "val2", "val3", "val4"]
+
+    expected_sql_insert = 'INSERT INTO public.table_name ' \
+                          '(col1, col2, col3, col4) ' \
+                          'VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING'
+    actual_sql_insert = insertToPostgresSqlPlain(relation, table_name, column_list, value_list, [])
+
+    assert expected_sql_insert == actual_sql_insert
+
+    unique_key_list = ["col1", "col2"]
+
+    expected_sql_upsert = 'INSERT INTO public.table_name ' \
+                          '(col1, col2, col3, col4) ' \
+                          'VALUES (%s, %s, %s, %s) ' \
+                          'ON CONFLICT (col1, col2) DO UPDATE ' \
+                          'SET (col3, col4) = (EXCLUDED.col3, EXCLUDED.col4)'
+    actual_sql_upsert = insertToPostgresSqlPlain(relation, table_name, column_list, value_list, unique_key_list)
+
+    assert expected_sql_upsert == actual_sql_upsert
