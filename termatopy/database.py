@@ -1,6 +1,9 @@
 import warnings
 warnings.filterwarnings("ignore")
+import ast
 import psycopg2 as ps
+from psycopg2 import sql
+from psycopg2.extras import Json
 import pymongo as pm
 import pandas as pd
 import numpy
@@ -154,6 +157,77 @@ def insertToPostgres(host, port, username, password, database, table, data, colu
     except Exception as e:
         conn.close()
         raise Exception(str(e))
+
+
+def insertToPostgres2(host, username, password, database, table, data, column_types, port=5432, schema="public",
+                      page_size=100, unique_key_list=[]):
+    conn = ps.connect(host=host, port=port, database=database, user=username, password=password)
+    cur = conn.cursor()
+
+    progress = 0
+    col_names = list(data)
+
+    for index, value in data.iterrows():
+        value_list = list()
+        column_list = list()
+
+        for col_name in col_names:
+            column_list.append(col_name.lower())
+            value_list.append(convertColumnType(col_name, value, column_types))
+
+        insert_query = insertToPostgresSqlPlain(schema, table, column_list, value_list, unique_key_list)
+
+        cur.execute(insert_query, value_list)
+        progress += 1
+
+        if progress % page_size == 0:
+            conn.commit()
+
+    conn.commit()
+    conn.close()
+    output = {"columns" : len(data.columns), "rows" : len(data)}
+    return pd.DataFrame(output, index = [0])
+
+
+def insertToPostgresSqlPlain(relation, target, column_list, value_list, unique_key_list):
+    insert_query = "INSERT INTO {relation}.{target} ({columns_insert}) VALUES ({value_insert})" + (
+        " ON CONFLICT DO NOTHING" if (len(
+            unique_key_list) == 0) else " ON CONFLICT ({pk}) DO UPDATE SET ({columns_update}) = ({value_update})")
+    kwargs = dict()
+
+    kwargs["relation"] = relation
+    kwargs["target"] = target
+    kwargs["columns_insert"] = ", ".join(column_list)
+    kwargs["value_insert"] = ", ".join(["%s"] * len(value_list))
+
+    if len(unique_key_list) > 0:
+        kwargs["pk"] = ", ".join(unique_key_list)
+
+        kwargs["columns_update"] = ", ".join(
+            [column for column in column_list if column not in unique_key_list]
+        )
+        kwargs["value_update"] = ", ".join(
+            [("EXCLUDED." + column) for column in column_list if column not in unique_key_list]
+        )
+    return insert_query.format(**kwargs)
+
+
+def convertColumnType(column, values, column_types):
+    column_type = column_types[column]
+    column_value = values.get(column)
+
+    if column_type == "json":
+        if isinstance(column_value, str):
+            return Json(ast.literal_eval(column_value))
+        else:
+            return Json(column_value)
+    elif column_type == "text":
+        return str(column_value)
+    elif column_type == "int":
+        return int(column_value)
+    else:
+        raise Exception("Unknown column [%s] of type [%s]" % (column, column_type))
+
 
 def getExecutionStatus(executionId, client):
     execution = client.get_query_execution(QueryExecutionId = executionId)
