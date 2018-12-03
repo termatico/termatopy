@@ -4,6 +4,7 @@ import ast
 import psycopg2 as ps
 from psycopg2 import sql
 from psycopg2.extras import Json
+from psycopg2.extensions import AsIs
 import pymongo as pm
 import pandas as pd
 import numpy
@@ -167,7 +168,7 @@ def insertToPostgres2(host, username, password, database, table, data, column_ty
     progress = 0
     col_names = list(data)
 
-    for index, value in data.iterrows():
+    for index, value in data.fillna(AsIs(None)).iterrows():
         value_list = list()
         column_list = list()
 
@@ -222,9 +223,9 @@ def convertColumnType(column, values, column_types):
         else:
             return Json(column_value)
     elif column_type == "text":
-        return str(column_value)
+        return column_value if isinstance(column_value, AsIs) else str(column_value)
     elif column_type == "int":
-        return int(column_value)
+        return column_value if isinstance(column_value, AsIs) else int(column_value)
     else:
         raise Exception("Unknown column [%s] of type [%s]" % (column, column_type))
 
