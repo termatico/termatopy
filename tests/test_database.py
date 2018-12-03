@@ -1,4 +1,6 @@
 import pandas as pd
+from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 
 def test_convert_column_type():
@@ -6,17 +8,8 @@ def test_convert_column_type():
     from psycopg2.extras import Json
     from termatopy.database import convertColumnType
 
-    column_types = dict()
-    column_types["col1"] = "text"
-    column_types["col2"] = "int"
-    column_types["col3"] = "json"
-    column_types["col4"] = "json"
-
-    column_values = dict()
-    column_values["col1"] = ['a', 'b', 'c', 'd']
-    column_values["col2"] = [1, 2, 3, 4]
-    column_values["col3"] = ['{\'k1\':\'v1\'}', '{\'k2\':\'v2\'}', '{\'k3\':\'v3\'}', '{\'k4\':\'v4\'}']
-    column_values["col4"] = [{'k1': 'v1'}, {'k2': 'v2'}, {'k3': 'v3'}, {'k4': 'v4'}]
+    column_types = sample_column_types()
+    column_values = sample_column_values()
 
     df = pd.DataFrame.from_dict(column_values)
 
@@ -62,3 +55,41 @@ def test_insert_to_postgres_sql_plain():
     actual_sql_upsert = insertToPostgresSqlPlain(relation, table_name, column_list, value_list, unique_key_list)
 
     assert expected_sql_upsert == actual_sql_upsert
+
+
+def test_insert_to_postgres_2():
+    import psycopg2 as ps
+    from termatopy.database import insertToPostgres2
+
+    psycopg2_conn = Mock()
+    psycopg2_cur = Mock()
+
+    ps.connect = MagicMock(return_value=psycopg2_conn)
+    psycopg2_conn.cursor = MagicMock(return_value=psycopg2_cur)
+
+    column_types = sample_column_types()
+    column_values = sample_column_values()
+
+    df = pd.DataFrame.from_dict(column_values)
+
+    insertToPostgres2("host", "username", "password", "database", "table", df, column_types)
+
+
+def sample_column_types():
+    column_types = dict()
+    column_types["col1"] = "text"
+    column_types["col2"] = "int"
+    column_types["col3"] = "json"
+    column_types["col4"] = "json"
+
+    return column_types
+
+
+def sample_column_values():
+    column_values = dict()
+    column_values["col1"] = ['a', 'b', 'c', 'd']
+    column_values["col2"] = [1, 2, 3, 4]
+    column_values["col3"] = ['{\'k1\':\'v1\'}', '{\'k2\':\'v2\'}', '{\'k3\':\'v3\'}', '{\'k4\':\'v4\'}']
+    column_values["col4"] = [{'k1': 'v1'}, {'k2': 'v2'}, {'k3': 'v3'}, {'k4': 'v4'}]
+
+    return column_values
