@@ -10,11 +10,13 @@ def test_convert_column_type():
     column_types["col1"] = "text"
     column_types["col2"] = "int"
     column_types["col3"] = "json"
+    column_types["col4"] = "json"
 
     column_values = dict()
     column_values["col1"] = ['a', 'b', 'c', 'd']
     column_values["col2"] = [1, 2, 3, 4]
     column_values["col3"] = ['{\'k1\':\'v1\'}', '{\'k2\':\'v2\'}', '{\'k3\':\'v3\'}', '{\'k4\':\'v4\'}']
+    column_values["col4"] = [{'k1': 'v1'}, {'k2': 'v2'}, {'k3': 'v3'}, {'k4': 'v4'}]
 
     df = pd.DataFrame.from_dict(column_values)
 
@@ -29,3 +31,7 @@ def test_convert_column_type():
     expected3 = Json(ast.literal_eval(column_values.get("col3")[0]))
     actual3 = convertColumnType("col3", df.iloc[0], column_types)
     assert expected3.adapted == actual3.adapted
+
+    expected4 = Json(column_values.get("col4")[0])
+    actual4 = convertColumnType("col4", df.iloc[0], column_types)
+    assert expected4.adapted == actual4.adapted
