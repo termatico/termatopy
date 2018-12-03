@@ -32,6 +32,7 @@ from .ftp import ftpReadDelimitedText
 
 
 import numpy as np
+import psycopg2 as ps
 from psycopg2.extensions import register_adapter, AsIs
 
 
