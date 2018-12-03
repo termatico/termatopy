@@ -73,7 +73,7 @@ def nan_to_null(f,
         _NULL=ps.extensions.AsIs('NULL'),
         _NaN=np.NaN,
         _Float=ps.extensions.Float):
-    if f is not _NaN:
+    if not np.isnan(f):
         return _Float(f)
     return _NULL
 
