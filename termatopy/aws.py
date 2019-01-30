@@ -73,7 +73,7 @@ def fetchS3(access_key, secret, bucket, file, returnObj = False, naFilter = True
                 return data
             elif fileType == 'csv':
                 bytesObject = io.BytesIO(obj['Body'].read())
-                data = pd.read_csv(bytesObject, na_filter = naFilter)
+                data = pd.read_csv(bytesObject, na_filter = naFilter, dtype="str")
                 return data
             elif fileType == 'json':
                 bytesObject = io.BytesIO(obj['Body'].read())
