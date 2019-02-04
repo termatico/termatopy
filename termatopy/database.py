@@ -13,6 +13,7 @@ from bson.json_util import loads as bson_loads
 from .aws import extractBucketName
 from .aws import fetchS3
 
+
 def queryPostgres(host, port, user, password, database, query):
     '''
     Submit a blocking query to Postgres
@@ -117,43 +118,45 @@ def cleanUpString(text, strip_chars=[], replace_extras={}):
 
     return text.strip()
 
-def insertToPostgres(host, port, username, password, database, table, data, columns, upsertPrimaryKey = None):
+
+def insertToPostgres(host, port, username, password, database, table, data, columns, upsertPrimaryKey=None):
     try:
         data = data.where((pd.notnull(data)), None)
         rowsToInsert = len(data)
-        fieldReplacement = createFieldReplacement(len(data.columns))
-        conn = ps.connect("dbname='" + database + "' user='" + username + "' host='" + host + "' port='" + port + "' password='" + password + "'")
-        cur = conn.cursor()
-        allRowSql = bytes(b"INSERT INTO " + table.encode() + b" (" + cleanUpString(str(data.columns.values.tolist()), ["[", "]", "'"], {"'" : ""}).encode() + b") VALUES ")
+        if rowsToInsert > 0:
+            fieldReplacement = createFieldReplacement(len(data.columns))
+            conn = ps.connect("dbname='" + database + "' user='" + username + "' host='" + host + "' port='" + port + "' password='" + password + "'")
+            cur = conn.cursor()
+            allRowSql = bytes(b"INSERT INTO " + table.encode() + b" (" + cleanUpString(str(data.columns.values.tolist()), ["[", "]", "'"], {"'": ""}).encode() + b") VALUES ")
 
-        for i in range(rowsToInsert):
-            row = data.iloc[i].values.tolist()
-            if i == (rowsToInsert - 1):
-                rowSql = cur.mogrify(fieldReplacement, (row))
-            else:
-                rowSql = cur.mogrify(fieldReplacement, (row)) + b","
-
-            allRowSql = allRowSql + rowSql
-
-        if upsertPrimaryKey != None:
-            upsertPrimaryKey = str(upsertPrimaryKey).replace("[", "").replace("]", "").replace("'", "")
-
-            baseUpsert = b" ON CONFLICT (" + upsertPrimaryKey.encode() + b") DO UPDATE SET "
-
-            allRowSql = allRowSql + baseUpsert
-
-            for i in range(len(data.columns)):
-                if i == (len(data.columns) - 1):
-                    columnUpsert = data.columns.values.tolist()[i].encode() + b" = EXCLUDED." + data.columns.values.tolist()[i].encode()
-                    allRowSql = allRowSql + columnUpsert
+            for i in range(rowsToInsert):
+                row = data.iloc[i].values.tolist()
+                if i == (rowsToInsert - 1):
+                    rowSql = cur.mogrify(fieldReplacement, (row))
                 else:
-                    columnUpsert = data.columns.values.tolist()[i].encode() + b" = EXCLUDED." + data.columns.values.tolist()[i].encode() + b","
-                    allRowSql = allRowSql + columnUpsert
+                    rowSql = cur.mogrify(fieldReplacement, (row)) + b","
 
-        cur.execute(allRowSql)
-        conn.commit()
-        conn.close()
-        results = {"columns" : len(data.columns), "rows" : len(data)}
+                allRowSql = allRowSql + rowSql
+
+            if upsertPrimaryKey is not None:
+                upsertPrimaryKey = str(upsertPrimaryKey).replace("[", "").replace("]", "").replace("'", "")
+
+                baseUpsert = b" ON CONFLICT (" + upsertPrimaryKey.encode() + b") DO UPDATE SET "
+
+                allRowSql = allRowSql + baseUpsert
+
+                for i in range(len(data.columns)):
+                    if i == (len(data.columns) - 1):
+                        columnUpsert = data.columns.values.tolist()[i].encode() + b" = EXCLUDED." + data.columns.values.tolist()[i].encode()
+                        allRowSql = allRowSql + columnUpsert
+                    else:
+                        columnUpsert = data.columns.values.tolist()[i].encode() + b" = EXCLUDED." + data.columns.values.tolist()[i].encode() + b","
+                        allRowSql = allRowSql + columnUpsert
+
+            cur.execute(allRowSql)
+            conn.commit()
+            conn.close()
+        results = {"columns": len(data.columns), "rows": len(data)}
         return results
     except Exception as e:
         conn.close()
