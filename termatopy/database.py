@@ -10,6 +10,7 @@ import pandas as pd
 import numpy
 import boto3
 from bson.json_util import loads as bson_loads
+from bson.objectid import ObjectId
 from .aws import extractBucketName
 from .aws import fetchS3
 
