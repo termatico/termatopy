@@ -41,7 +41,7 @@ def checkFileType(file_path):
     return fileType
 
 
-def fetchS3(access_key, secret, bucket, file, returnObj=False, naFilter=True, delimiter=","):
+def fetchS3(access_key, secret, bucket, file, returnObj=False, naFilter=True, delimiter=",", dtype=None):
     '''
     Fetch a file from an AWS S3 Bucket
     -----------
@@ -73,12 +73,12 @@ def fetchS3(access_key, secret, bucket, file, returnObj=False, naFilter=True, de
         elif returnObj is False:
             if fileType == 'txt':
                 bytesObject = io.BytesIO(obj['Body'].read())
-                data = pd.read_table(bytesObject, na_filter=naFilter, delimiter=delimiter)
+                data = pd.read_table(bytesObject, na_filter=naFilter, delimiter=delimiter, dtype=dtype)
                 return data
             elif fileType == 'csv':
                 bytesObject = io.BytesIO(obj['Body'].read())
                 try:
-                    data = pd.read_csv(bytesObject, na_filter=naFilter)
+                    data = pd.read_csv(bytesObject, na_filter=naFilter, dtype=dtype)
                 except pd.errors.EmptyDataError:
                     data = pd.DataFrame()
                 return data
